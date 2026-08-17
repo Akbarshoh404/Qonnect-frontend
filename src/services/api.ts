@@ -1,10 +1,15 @@
 import axios from 'axios';
 
-// In development, Vite proxies /api → localhost:5000
-// In production, VITE_API_URL points to the real backend (e.g. https://qonnect-api.akbarshoh-dev.uz)
-const baseURL = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/api`
-  : '/api';
+// Detect production domain dynamically so requests always target the real backend
+// even if VITE_API_URL was not set in Vercel build environment.
+const isProductionDomain =
+  typeof window !== 'undefined' && window.location.hostname.includes('akbarshoh-dev.uz');
+
+const defaultProdApiUrl = isProductionDomain ? 'https://qonnect-api.akbarshoh-dev.uz' : '';
+
+const apiBase = import.meta.env.VITE_API_URL || defaultProdApiUrl;
+
+const baseURL = apiBase ? `${apiBase}/api` : '/api';
 
 const api = axios.create({
   baseURL,
@@ -19,10 +24,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Redirect to login if unauthorized
+      // Redirect to landing if unauthorized
       const currentPath = window.location.pathname;
       if (currentPath !== '/login' && currentPath !== '/') {
-        window.location.href = '/login';
+        window.location.href = '/';
       }
     }
     return Promise.reject(error);
