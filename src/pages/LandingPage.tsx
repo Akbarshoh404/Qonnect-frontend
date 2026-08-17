@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   QrCode, RefreshCw, HardDrive, BarChart2, Globe, ArrowRight, Zap,
-  File, Power, ChevronDown, Sun, Moon, Monitor,
+  File, Power, ChevronDown, Sun, Moon, Monitor, LayoutDashboard,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { LanguageSwitcher } from '../components/ui/LanguageSwitcher';
+import { useAuth } from '../hooks/useAuth';
+import { authService } from '../services/auth';
 import { cn } from '../utils/helpers';
 
 const FEATURE_ICONS = [RefreshCw, HardDrive, Globe, BarChart2, File, Power];
@@ -153,9 +156,15 @@ function ThemeToggle() {
 
 export function LandingPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
 
-  const handleGoogleLogin = () => {
-    window.location.href = '/api/auth/google';
+  const handleAction = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      window.location.href = authService.getGoogleLoginUrl();
+    }
   };
 
   const featureItems = t('landing.features.items', { returnObjects: true }) as { title: string; desc: string }[];
@@ -185,13 +194,20 @@ export function LandingPage() {
           <LanguageSwitcher variant="minimal" />
           <ThemeToggle />
           <button
-            onClick={handleGoogleLogin}
+            onClick={handleAction}
             className="ml-1 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
               bg-slate-900/5 hover:bg-slate-900/10 border border-slate-900/10 hover:border-slate-900/20
               text-slate-700 hover:text-slate-900 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 dark:hover:border-white/20
               dark:text-slate-300 dark:hover:text-white transition-all duration-200 cursor-pointer"
           >
-            {t('landing.nav.signIn')}
+            {isAuthenticated ? (
+              <>
+                <LayoutDashboard size={15} />
+                <span>{t('nav.dashboard')}</span>
+              </>
+            ) : (
+              t('landing.nav.signIn')
+            )}
           </button>
         </div>
       </nav>
@@ -243,18 +259,27 @@ export function LandingPage() {
             >
               <button
                 id="google-signin-btn"
-                onClick={handleGoogleLogin}
+                onClick={handleAction}
                 className="group flex items-center gap-3 px-8 py-4 rounded-2xl text-base font-semibold
                   bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100
                   shadow-2xl shadow-indigo-500/20
                   transition-all duration-200 hover:scale-[1.03] active:scale-100 cursor-pointer"
               >
-                <GoogleGlyph />
-                {t('landing.hero.ctaGoogle')}
+                {isAuthenticated ? (
+                  <>
+                    <LayoutDashboard size={18} />
+                    <span>{t('nav.dashboard')}</span>
+                  </>
+                ) : (
+                  <>
+                    <GoogleGlyph />
+                    {t('landing.hero.ctaGoogle')}
+                  </>
+                )}
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <p className="text-xs text-slate-400 dark:text-slate-600">
-                {t('landing.hero.ctaNote')}
+                {isAuthenticated ? `${t('common.signedInAs') || 'Signed in as'} ${user?.email}` : t('landing.hero.ctaNote')}
               </p>
             </motion.div>
           </div>
@@ -394,13 +419,22 @@ export function LandingPage() {
             <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white mb-5 text-balance">{t('landing.finalCta.title')}</h2>
             <p className="text-slate-300 dark:text-slate-400 text-lg max-w-xl mx-auto mb-10">{t('landing.finalCta.subtitle')}</p>
             <button
-              onClick={handleGoogleLogin}
+              onClick={handleAction}
               className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl text-base font-semibold
                 bg-white text-slate-900 hover:bg-slate-100
                 shadow-2xl shadow-indigo-500/20 transition-all duration-200 hover:scale-[1.03] active:scale-100 cursor-pointer"
             >
-              <GoogleGlyph />
-              {t('landing.finalCta.cta')}
+              {isAuthenticated ? (
+                <>
+                  <LayoutDashboard size={18} />
+                  <span>{t('nav.dashboard')}</span>
+                </>
+              ) : (
+                <>
+                  <GoogleGlyph />
+                  {t('landing.finalCta.cta')}
+                </>
+              )}
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </Reveal>

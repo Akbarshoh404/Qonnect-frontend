@@ -34,16 +34,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   ];
 
   const handleLogout = async () => {
-    // Immediately mark as unauthenticated in cache so AuthRedirect
-    // won't redirect back to dashboard before session is cleared
-    qc.setQueryData(['auth', 'me'], null);
     try {
       await authService.logout();
-    } catch {
-      // ignore — session might already be gone
+    } catch (e) {
+      console.error('Logout error:', e);
     }
-    qc.resetQueries({ queryKey: ['auth'] });
-    navigate('/');
+    qc.setQueryData(['auth', 'me'], null);
+    qc.removeQueries({ queryKey: ['auth'] });
+    qc.clear();
+    window.location.href = '/';
   };
 
   const cycleTheme = () => {

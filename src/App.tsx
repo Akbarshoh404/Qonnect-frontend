@@ -29,17 +29,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AuthRedirect() {
-  const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return <PageLoader />;
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
-  return <LandingPage />;
-}
-
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<AuthRedirect />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Navigate to="/" replace />} />
 
       <Route path="/dashboard" element={
