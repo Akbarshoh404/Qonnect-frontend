@@ -122,8 +122,8 @@ export function AdminPage() {
   };
 
   const sortedUsers = [...users].sort((a, b) => {
-    const av = (a as Record<string, unknown>)[sortField];
-    const bv = (b as Record<string, unknown>)[sortField];
+    const av = (a as unknown as Record<string, unknown>)[sortField];
+    const bv = (b as unknown as Record<string, unknown>)[sortField];
     const cmp = String(av) < String(bv) ? -1 : 1;
     return sortDir === 'asc' ? cmp : -cmp;
   });
