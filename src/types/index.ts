@@ -11,6 +11,37 @@ export interface User {
 
 export type QrType = 'url' | 'file';
 
+export type DotStyle = 'squares' | 'dots' | 'rounded' | 'classy';
+export type CornerOuterStyle = 'square' | 'rounded' | 'circle';
+export type CornerInnerStyle = 'square' | 'dot';
+
+export interface QRStyleConfig {
+  fg_color?: string;
+  bg_color?: string;
+  transparent_bg?: boolean;
+  gradient_enabled?: boolean;
+  gradient_type?: 'linear' | 'radial';
+  gradient_start?: string;
+  gradient_end?: string;
+  dot_style?: DotStyle;
+  corner_outer?: CornerOuterStyle;
+  corner_inner?: CornerInnerStyle;
+  logo_url?: string;
+  logo_preset?: 'none' | 'whatsapp' | 'instagram' | 'telegram' | 'youtube' | 'twitter' | 'wifi' | 'web';
+  frame_style?: 'none' | 'top' | 'bottom' | 'bubble';
+  frame_text?: string;
+  frame_color?: string;
+  frame_text_color?: string;
+}
+
+export interface InactivePageConfig {
+  title?: string;
+  message?: string;
+  logo_url?: string;
+  support_url?: string;
+  support_label?: string;
+}
+
 export interface QrCode {
   id: number;
   short_code: string;
@@ -19,6 +50,10 @@ export interface QrCode {
   is_active: boolean;
   public_url: string;
   scan_count: number;
+  project_name?: string | null;
+  tags?: string[];
+  style_config?: QRStyleConfig | null;
+  inactive_config?: InactivePageConfig | null;
   destination_url?: string;      // URL type
   original_filename?: string;    // File type
   mime_type?: string;            // File type
@@ -96,6 +131,23 @@ export interface PaginatedQrCodes {
   page: number;
   per_page: number;
   pages: number;
+}
+
+export interface ProjectItem {
+  name: string;
+  count: number;
+}
+
+export interface TagItem {
+  name: string;
+  count: number;
+}
+
+export interface BulkCreateItem {
+  title: string;
+  destination_url: string;
+  project_name?: string;
+  tags?: string[];
 }
 
 export interface ApiError {

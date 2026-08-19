@@ -2,20 +2,24 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link2, File, ArrowLeft, Check, Download, ExternalLink } from 'lucide-react';
+import {
+  Link2, File, ArrowLeft, Check, Download, ExternalLink,
+  Sparkles, Palette, Folder, Settings, ShieldAlert
+} from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { FileDropzone } from '../components/ui/FileDropzone';
 import { QRDisplay } from '../components/qr/QRDisplay';
+import { QRDesignStudio } from '../components/qr/QRDesignStudio';
 import { CopyField } from '../components/ui/CopyButton';
-import { useCreateUrlQR, useCreateFileQR } from '../hooks/useQRCodes';
+import { useCreateUrlQR, useCreateFileQR, useProjectsAndTags } from '../hooks/useQRCodes';
 import { useDomains } from '../hooks/useDomains';
 import { useAuth } from '../hooks/useAuth';
 import { authService } from '../services/auth';
 import { qrService } from '../services/qr';
-import type { QrCode } from '../types';
-import { isValidHttpUrl } from '../utils/helpers';
+import type { QrCode, QRStyleConfig, InactivePageConfig } from '../types';
+import { isValidHttpUrl, cn } from '../utils/helpers';
 import { stepBackwardMotion, stepForwardMotion, premiumEase, usePremiumMotion } from '../utils/motion';
 
 type Step = 'choose' | 'form' | 'success';
@@ -26,6 +30,8 @@ export function CreateQRPage() {
   const navigate = useNavigate();
   const { driveConnected } = useAuth();
   const { data: domains } = useDomains();
+  const { data: projectsData } = useProjectsAndTags();
+
   const [step, setStep] = useState<Step>('choose');
   const [stepDirection, setStepDirection] = useState<'forward' | 'backward'>('forward');
   const [qrType, setQrType] = useState<QrType>('url');
@@ -36,12 +42,35 @@ export function CreateQRPage() {
   const [destinationUrl, setDestinationUrl] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedDomain, setSelectedDomain] = useState<number | null>(null);
+  const [projectName, setProjectName] = useState('');
+  const [tagsInput, setTagsInput] = useState('');
+  const [activeTab, setActiveTab] = useState<'content' | 'design' | 'inactive'>('content');
+
+  // QR Design Studio styling state
+  const [styleConfig, setStyleConfig] = useState<QRStyleConfig>({
+    fg_color: '#0f172a',
+    bg_color: '#ffffff',
+    dot_style: 'squares',
+    corner_outer: 'square',
+    corner_inner: 'square',
+    logo_preset: 'none',
+    frame_style: 'none',
+  });
+
+  // Branded inactive page state
+  const [inactiveConfig, setInactiveConfig] = useState<InactivePageConfig>({
+    title: 'Link Temporarily Unavailable',
+    message: 'The creator has paused this QR code. Please check back later.',
+    support_url: '',
+    support_label: 'Contact Support',
+  });
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const createUrl = useCreateUrlQR();
   const createFile = useCreateFileQR();
 
-  const verifiedDomains = domains?.filter(d => d.verified) || [];
+  const verifiedDomains = domains?.filter((d) => d.verified) || [];
   const isCreating = createUrl.isPending || createFile.isPending;
 
   const validate = (): boolean => {
@@ -59,18 +88,31 @@ export function CreateQRPage() {
   const handleSubmit = async () => {
     if (!validate()) return;
 
+    const tags = tagsInput
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+
     try {
       let result: QrCode;
       if (qrType === 'url') {
         result = await createUrl.mutateAsync({
           title,
           destination_url: destinationUrl,
+          project_name: projectName.trim() || undefined,
+          tags: tags.length > 0 ? tags : undefined,
+          style_config: styleConfig,
+          inactive_config: inactiveConfig,
           custom_domain_id: selectedDomain,
         });
       } else {
         result = await createFile.mutateAsync({
           title,
           file: selectedFile!,
+          project_name: projectName.trim() || undefined,
+          tags: tags.length > 0 ? tags : undefined,
+          style_config: styleConfig,
+          inactive_config: inactiveConfig,
           custom_domain_id: selectedDomain,
         });
       }
@@ -78,7 +120,9 @@ export function CreateQRPage() {
       setStepDirection('forward');
       setStep('success');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || t('createQr.genericError');
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        t('createQr.genericError');
       setErrors({ submit: msg });
     }
   };
@@ -101,20 +145,33 @@ export function CreateQRPage() {
   const stepVariants = reduceMotion
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
     : stepDirection === 'forward'
-      ? stepForwardMotion
-      : stepBackwardMotion;
+    ? stepForwardMotion
+    : stepBackwardMotion;
 
   return (
     <AppLayout>
       <AnimatePresence mode="wait">
         {step === 'choose' && (
-          <motion.div key="choose" initial={stepVariants.initial} animate={stepVariants.animate} exit={stepVariants.exit} transition={{ duration: 0.24, ease: premiumEase }} className="max-w-lg mx-auto">
+          <motion.div
+            key="choose"
+            initial={stepVariants.initial}
+            animate={stepVariants.animate}
+            exit={stepVariants.exit}
+            transition={{ duration: 0.24, ease: premiumEase }}
+            className="max-w-lg mx-auto"
+          >
             <div className="mb-8">
-              <button type="button" onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 transition-colors cursor-pointer">
+              <button
+                type="button"
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 transition-colors cursor-pointer"
+              >
                 <ArrowLeft size={16} /> {t('createQr.back')}
               </button>
               <h1 className="text-2xl font-bold">{t('createQr.title')}</h1>
-              <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">{t('createQr.subtitle')}</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+                {t('createQr.subtitle')}
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -127,8 +184,12 @@ export function CreateQRPage() {
                 <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/15 flex items-center justify-center mb-4 group-hover:bg-indigo-500/25 transition-colors">
                   <Link2 size={22} className="text-indigo-600 dark:text-indigo-400" />
                 </div>
-                <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1">{t('createQr.urlType')}</h3>
-                <p className="text-sm text-slate-400 dark:text-slate-500">{t('createQr.urlTypeDesc')}</p>
+                <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1">
+                  {t('createQr.urlType')}
+                </h3>
+                <p className="text-sm text-slate-400 dark:text-slate-500">
+                  {t('createQr.urlTypeDesc')}
+                </p>
               </button>
 
               <div className="group p-6 rounded-2xl surface text-left hover:bg-purple-500/10 hover:border-purple-500/30 transition-all duration-200">
@@ -142,15 +203,21 @@ export function CreateQRPage() {
                   <div className="w-12 h-12 rounded-2xl bg-purple-500/10 dark:bg-purple-500/15 flex items-center justify-center mb-4 group-hover:bg-purple-500/25 transition-colors">
                     <File size={22} className="text-purple-600 dark:text-purple-400" />
                   </div>
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1">{t('createQr.fileType')}</h3>
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1">
+                    {t('createQr.fileType')}
+                  </h3>
                   <p className="text-sm text-slate-400 dark:text-slate-500">
-                    {driveConnected ? t('createQr.fileTypeDescConnected') : t('createQr.fileTypeDescDisconnected')}
+                    {driveConnected
+                      ? t('createQr.fileTypeDescConnected')
+                      : t('createQr.fileTypeDescDisconnected')}
                   </p>
                 </button>
                 {!driveConnected && (
                   <button
                     type="button"
-                    onClick={() => { window.location.href = authService.getDriveConnectUrl(); }}
+                    onClick={() => {
+                      window.location.href = authService.getDriveConnectUrl();
+                    }}
                     className="mt-4 inline-flex items-center text-xs text-indigo-600 dark:text-indigo-400 underline cursor-pointer"
                   >
                     {t('createQr.connectDriveLink')}
@@ -162,165 +229,307 @@ export function CreateQRPage() {
         )}
 
         {step === 'form' && (
-          <motion.div key="form" initial={stepVariants.initial} animate={stepVariants.animate} exit={stepVariants.exit} transition={{ duration: 0.24, ease: premiumEase }} className="max-w-lg mx-auto">
-            <div className="mb-8">
-              <button type="button" onClick={goBackToChoose} className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 transition-colors cursor-pointer">
-                <ArrowLeft size={16} /> {t('createQr.back')}
-              </button>
-              <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${qrType === 'url' ? 'bg-indigo-500/10 dark:bg-indigo-500/15' : 'bg-purple-500/10 dark:bg-purple-500/15'}`}>
-                  {qrType === 'url' ? <Link2 size={18} className="text-indigo-600 dark:text-indigo-400" /> : <File size={18} className="text-purple-600 dark:text-purple-400" />}
-                </div>
+          <motion.div
+            key="form"
+            initial={stepVariants.initial}
+            animate={stepVariants.animate}
+            exit={stepVariants.exit}
+            transition={{ duration: 0.24, ease: premiumEase }}
+            className="max-w-4xl mx-auto"
+          >
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <button
+                  type="button"
+                  onClick={goBackToChoose}
+                  className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-2 transition-colors cursor-pointer"
+                >
+                  <ArrowLeft size={16} /> {t('createQr.back')}
+                </button>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  {qrType === 'url' ? t('createQr.formTitleUrl') : t('createQr.formTitleFile')}
+                </h1>
+              </div>
+
+              {/* Navigation Tabs (Content vs Design vs Inactive Branding) */}
+              <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900/[0.04] dark:bg-white/[0.04]">
+                {[
+                  { id: 'content', label: '1. Destination', icon: Link2 },
+                  { id: 'design', label: '2. QR Design Studio', icon: Palette },
+                  { id: 'inactive', label: '3. Branded 404', icon: ShieldAlert },
+                ].map((t) => {
+                  const Icon = t.icon;
+                  const active = activeTab === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setActiveTab(t.id as typeof activeTab)}
+                      className={cn(
+                        'flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer',
+                        active
+                          ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
+                      )}
+                    >
+                      <Icon size={13} />
+                      <span>{t.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Tab 1: Content & Destination */}
+            {activeTab === 'content' && (
+              <div className="surface rounded-3xl p-6 sm:p-8 space-y-6 max-w-xl mx-auto">
+                <Input
+                  id="qr-title"
+                  label={t('createQr.titleLabel')}
+                  placeholder={t('createQr.titlePlaceholder')}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  error={errors.title}
+                />
+
+                {qrType === 'url' ? (
+                  <Input
+                    id="qr-url"
+                    label={t('createQr.urlLabel')}
+                    placeholder="https://example.com"
+                    type="url"
+                    value={destinationUrl}
+                    onChange={(e) => setDestinationUrl(e.target.value)}
+                    error={errors.url}
+                    hint={t('createQr.urlHint')}
+                  />
+                ) : (
+                  <FileDropzone
+                    label={t('createQr.fileLabel')}
+                    onFileSelect={setSelectedFile}
+                    currentFile={selectedFile}
+                    hint={t('createQr.fileHint')}
+                    error={errors.file}
+                  />
+                )}
+
+                {/* Project / Folder Assign */}
                 <div>
-                  <h1 className="text-xl font-bold">
-                    {qrType === 'url' ? t('createQr.formTitleUrl') : t('createQr.formTitleFile')}
-                  </h1>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
-                    {qrType === 'url' ? t('createQr.formSubtitleUrl') : t('createQr.formSubtitleFile')}
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Folder / Project (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    list="projects-list"
+                    placeholder="e.g. Dining Room, Marketing 2026"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:border-indigo-500"
+                  />
+                  <datalist id="projects-list">
+                    {projectsData?.projects?.map((p) => (
+                      <option key={p.name} value={p.name} />
+                    ))}
+                  </datalist>
+                </div>
+
+                {/* Tags */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Tags (comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="menu, table-1, vip"
+                    value={tagsInput}
+                    onChange={(e) => setTagsInput(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                {/* Verified Custom Domains */}
+                {verifiedDomains.length > 0 && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {t('createQr.domainLabel')}
+                    </label>
+                    <select
+                      id="qr-domain"
+                      value={selectedDomain ?? ''}
+                      onChange={(e) =>
+                        setSelectedDomain(e.target.value ? Number(e.target.value) : null)
+                      }
+                      className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
+                    >
+                      <option value="">{t('createQr.defaultDomain')}</option>
+                      {verifiedDomains.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.domain}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {errors.submit && (
+                  <p className="text-xs text-rose-500 font-medium">{errors.submit}</p>
+                )}
+
+                <div className="flex items-center justify-between pt-4 border-t border-slate-200/60 dark:border-white/10">
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveTab('design')}
+                    leftIcon={<Palette size={15} />}
+                  >
+                    Customize Design →
+                  </Button>
+
+                  <Button
+                    id="submit-qr-btn"
+                    onClick={handleSubmit}
+                    loading={isCreating}
+                  >
+                    {t('createQr.submit')}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 2: QR Design Studio */}
+            {activeTab === 'design' && (
+              <div className="space-y-6">
+                <QRDesignStudio
+                  value={destinationUrl || 'https://qonnect.akbarshoh-dev.uz/q/preview'}
+                  styleConfig={styleConfig}
+                  onChange={setStyleConfig}
+                />
+
+                <div className="flex items-center justify-end gap-3 pt-4">
+                  <Button variant="outline" onClick={() => setActiveTab('content')}>
+                    ← Back to Content
+                  </Button>
+                  <Button onClick={handleSubmit} loading={isCreating}>
+                    Create Dynamic QR Code
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 3: Branded Inactive / 404 Page */}
+            {activeTab === 'inactive' && (
+              <div className="surface rounded-3xl p-6 sm:p-8 space-y-6 max-w-xl mx-auto">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
+                    Branded Inactive & 404 Fallback
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Customize the page shown to scanners whenever you pause this QR code or if it expires.
                   </p>
                 </div>
-              </div>
-            </div>
 
-            <div className="space-y-5">
-              <Input
-                id="qr-title"
-                label={t('createQr.titleLabel')}
-                placeholder={t('createQr.titlePlaceholder')}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                error={errors.title}
-              />
-
-              {qrType === 'url' ? (
                 <Input
-                  id="qr-url"
-                  label={t('createQr.urlLabel')}
-                  placeholder="https://example.com"
-                  type="url"
-                  value={destinationUrl}
-                  onChange={(e) => setDestinationUrl(e.target.value)}
-                  error={errors.url}
-                  hint={t('createQr.urlHint')}
+                  label="Inactive Page Headline"
+                  placeholder="Link Temporarily Unavailable"
+                  value={inactiveConfig.title || ''}
+                  onChange={(e) =>
+                    setInactiveConfig({ ...inactiveConfig, title: e.target.value })
+                  }
                 />
-              ) : (
-                <FileDropzone
-                  label={t('createQr.fileLabel')}
-                  onFileSelect={setSelectedFile}
-                  currentFile={selectedFile}
-                  hint={t('createQr.fileHint')}
-                  error={errors.file}
-                />
-              )}
 
-              {verifiedDomains.length > 0 && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-slate-600 dark:text-slate-300">{t('createQr.domainLabel')}</label>
-                  <select
-                    id="qr-domain"
-                    value={selectedDomain ?? ''}
-                    onChange={(e) => setSelectedDomain(e.target.value ? Number(e.target.value) : null)}
-                    className="h-10 px-3 rounded-xl bg-slate-900/[0.03] dark:bg-white/5 border border-slate-900/10 dark:border-white/10 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  >
-                    <option value="">{t('createQr.domainDefault')}</option>
-                    {verifiedDomains.map((d) => (
-                      <option key={d.id} value={d.id}>{d.domain}</option>
-                    ))}
-                  </select>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Custom Message
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="We're currently updating this catalog. Please check back tomorrow!"
+                    value={inactiveConfig.message || ''}
+                    onChange={(e) =>
+                      setInactiveConfig({ ...inactiveConfig, message: e.target.value })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
+                  />
                 </div>
-              )}
 
-              {errors.submit && (
-                <p role="alert" className="text-sm text-red-500 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
-                  {errors.submit}
-                </p>
-              )}
+                <Input
+                  label="Brand Logo URL (Optional)"
+                  placeholder="https://yourbrand.com/logo.png"
+                  value={inactiveConfig.logo_url || ''}
+                  onChange={(e) =>
+                    setInactiveConfig({ ...inactiveConfig, logo_url: e.target.value })
+                  }
+                />
 
-              <div className="flex gap-3 pt-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => { setStepDirection('backward'); setStep('choose'); }}
-                  className="flex-1"
-                >
-                  {t('createQr.cancel')}
-                </Button>
-                <Button
-                  id="submit-create-qr"
-                  onClick={handleSubmit}
-                  loading={isCreating}
-                  className="flex-1"
-                >
-                  {t('createQr.submit')}
-                </Button>
+                <Input
+                  label="Support / Home Link URL (Optional)"
+                  placeholder="https://yourbrand.com/contact"
+                  value={inactiveConfig.support_url || ''}
+                  onChange={(e) =>
+                    setInactiveConfig({ ...inactiveConfig, support_url: e.target.value })
+                  }
+                />
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200/60 dark:border-white/10">
+                  <Button onClick={handleSubmit} loading={isCreating}>
+                    Create Dynamic QR Code
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
         )}
 
         {step === 'success' && created && (
-          <motion.div key="success" initial={stepVariants.initial} animate={stepVariants.animate} exit={stepVariants.exit} transition={{ duration: 0.24, ease: premiumEase }} className="max-w-md mx-auto text-center">
-            <motion.div
-              initial={{ scale: 0.6, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
-              className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/15 mb-4"
-            >
-              <Check size={22} className="text-emerald-600 dark:text-emerald-400" />
-            </motion.div>
-            <h1 className="text-2xl font-bold mb-2">{t('createQr.successTitle')}</h1>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mb-8">
+          <motion.div
+            key="success"
+            initial={stepVariants.initial}
+            animate={stepVariants.animate}
+            exit={stepVariants.exit}
+            transition={{ duration: 0.24, ease: premiumEase }}
+            className="max-w-md mx-auto text-center"
+          >
+            <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+              <Check size={28} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+
+            <h1 className="text-2xl font-bold mb-1">{t('createQr.successTitle')}</h1>
+            <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">
               {t('createQr.successSubtitle')}
             </p>
 
-            <div className="flex justify-center mb-6">
-              <QRDisplay url={created.public_url} size={220} />
+            {/* Styled QR Display */}
+            <div className="p-6 rounded-3xl surface mb-6">
+              <QRDisplay
+                value={created.public_url}
+                size={200}
+                className="mb-4"
+                fgColor={created.style_config?.fg_color}
+                bgColor={created.style_config?.bg_color}
+              />
+
+              <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm mb-1">
+                {created.title}
+              </p>
+              <CopyField value={created.public_url} />
             </div>
 
-            <CopyField value={created.public_url} label={t('createQr.urlFieldLabel')} />
-
-            <div className="grid grid-cols-2 gap-3 mt-6">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
-                id="download-png-btn"
-                variant="secondary"
-                leftIcon={<Download size={15} />}
+                variant="outline"
                 onClick={() => qrService.downloadImage(created.id, 'png', created.short_code)}
+                leftIcon={<Download size={16} />}
+                className="flex-1"
               >
                 {t('createQr.downloadPng')}
               </Button>
               <Button
-                id="download-svg-btn"
-                variant="secondary"
-                leftIcon={<Download size={15} />}
-                onClick={() => qrService.downloadImage(created.id, 'svg', created.short_code)}
+                variant="primary"
+                onClick={() => navigate('/dashboard')}
+                className="flex-1"
               >
-                {t('createQr.downloadSvg')}
+                {t('createQr.goToDashboard')}
               </Button>
             </div>
-
-            <div className="flex gap-3 mt-4">
-              <Button
-                variant="ghost"
-                className="flex-1"
-                leftIcon={<ExternalLink size={15} />}
-                onClick={() => window.open(created.public_url, '_blank')}
-              >
-                {t('createQr.openUrl')}
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => navigate(`/qr/${created.id}/edit`)}
-              >
-                {t('createQr.viewDetails')}
-              </Button>
-            </div>
-
-            <button
-              type="button"
-              className="mt-4 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors cursor-pointer"
-              onClick={() => { setStepDirection('backward'); setStep('choose'); setCreated(null); }}
-            >
-              {t('createQr.createAnother')}
-            </button>
           </motion.div>
         )}
       </AnimatePresence>

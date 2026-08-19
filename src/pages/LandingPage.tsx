@@ -797,40 +797,68 @@ export function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200/60 dark:border-white/[0.06] py-10 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
-              <QrCode size={13} className="text-white" />
+      <footer className="border-t border-slate-200/60 dark:border-white/[0.06] py-12 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col gap-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-500/20">
+                <QrCode size={14} className="text-white" />
+              </div>
+              <span className="text-base font-bold tracking-tight">
+                {t('common.appName')}
+              </span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 ml-2 hidden sm:inline">
+                {t('landing.footer.tagline')}
+              </span>
             </div>
-            <span className="text-sm font-semibold tracking-tight">
-              {t('common.appName')}
-            </span>
-            <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
-              {t('landing.footer.tagline')}
-            </span>
+
+            <div className="flex items-center gap-6 text-xs text-slate-500 dark:text-slate-400">
+              <a
+                href="#features"
+                className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+              >
+                {t('landing.nav.features')}
+              </a>
+              <a
+                href="#how-it-works"
+                className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+              >
+                {t('landing.nav.howItWorks')}
+              </a>
+              <a
+                href="#faq"
+                className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+              >
+                {t('landing.nav.faq')}
+              </a>
+              <span>© {new Date().getFullYear()} Qonnect</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-6 text-xs text-slate-500 dark:text-slate-400">
+          {/* Akbarshoh Portfolio Signature Banner */}
+          <div className="pt-6 border-t border-slate-200/40 dark:border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 dark:text-slate-500">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>All Systems Operational · Cloudflare & Google Drive Ready</span>
+            </div>
+
             <a
-              href="#features"
-              className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+              href="https://akbarshoh-dev.uz"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/5 hover:bg-slate-900/10 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-white/10 shadow-sm transition-all cursor-pointer"
             >
-              {t('landing.nav.features')}
+              <span>Crafted with</span>
+              <span className="text-rose-500">❤️</span>
+              <span>by</span>
+              <span className="font-bold text-indigo-600 dark:text-indigo-400 group-hover:underline">
+                Akbarshoh
+              </span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+                (akbarshoh-dev.uz)
+              </span>
+              <ArrowUpRight size={13} className="text-slate-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </a>
-            <a
-              href="#how-it-works"
-              className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
-            >
-              {t('landing.nav.howItWorks')}
-            </a>
-            <a
-              href="#faq"
-              className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
-            >
-              {t('landing.nav.faq')}
-            </a>
-            <span>© {new Date().getFullYear()} Qonnect</span>
           </div>
         </div>
       </footer>

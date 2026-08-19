@@ -1,16 +1,27 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { qrService } from '../services/qr';
-import type { SortOption, FilterType } from '../types';
+import type { SortOption, FilterType, BulkCreateItem } from '../types';
 
 export function useQRCodes(params: {
   search?: string;
   type?: FilterType;
+  project?: string;
+  tag?: string;
   sort?: SortOption;
   page?: number;
+  per_page?: number;
 }) {
   return useQuery({
     queryKey: ['qr', 'list', params],
     queryFn: () => qrService.list(params),
+    staleTime: 15 * 1000,
+  });
+}
+
+export function useProjectsAndTags() {
+  return useQuery({
+    queryKey: ['qr', 'projects_tags'],
+    queryFn: () => qrService.getProjectsAndTags(),
     staleTime: 30 * 1000,
   });
 }
@@ -27,7 +38,10 @@ export function useCreateUrlQR() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: qrService.createUrl,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['qr', 'list'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['qr', 'list'] });
+      qc.invalidateQueries({ queryKey: ['qr', 'projects_tags'] });
+    },
   });
 }
 
@@ -35,7 +49,10 @@ export function useCreateFileQR() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: qrService.createFile,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['qr', 'list'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['qr', 'list'] });
+      qc.invalidateQueries({ queryKey: ['qr', 'projects_tags'] });
+    },
   });
 }
 
@@ -46,6 +63,7 @@ export function useUpdateQR(id: number) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['qr', id] });
       qc.invalidateQueries({ queryKey: ['qr', 'list'] });
+      qc.invalidateQueries({ queryKey: ['qr', 'projects_tags'] });
     },
   });
 }
@@ -55,7 +73,32 @@ export function useDeleteQR() {
   return useMutation({
     mutationFn: ({ id, deleteDriveFile }: { id: number; deleteDriveFile?: boolean }) =>
       qrService.delete(id, deleteDriveFile),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['qr', 'list'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['qr', 'list'] });
+      qc.invalidateQueries({ queryKey: ['qr', 'projects_tags'] });
+    },
+  });
+}
+
+export function useBulkCreateQR() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: qrService.bulkCreate,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['qr', 'list'] });
+      qc.invalidateQueries({ queryKey: ['qr', 'projects_tags'] });
+    },
+  });
+}
+
+export function useBulkActions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: qrService.bulkActions,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['qr', 'list'] });
+      qc.invalidateQueries({ queryKey: ['qr', 'projects_tags'] });
+    },
   });
 }
 
