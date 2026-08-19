@@ -10,6 +10,7 @@ import { Input } from '../components/ui/Input';
 import { Spinner } from '../components/ui/Spinner';
 import { useQRCodes } from '../hooks/useQRCodes';
 import { useAuth } from '../hooks/useAuth';
+import { authService } from '../services/auth';
 import type { SortOption, FilterType } from '../types';
 
 export function DashboardPage() {
@@ -64,7 +65,7 @@ export function DashboardPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.location.href = '/api/auth/drive/connect'}
+                onClick={() => { window.location.href = authService.getDriveConnectUrl(); }}
               >
                 {t('dashboard.connectDrive')}
               </Button>
@@ -86,11 +87,13 @@ export function DashboardPage() {
         </div>
         <div className="flex gap-2">
           {/* Type filter */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/[0.04] dark:bg-white/[0.04] border border-slate-900/8 dark:border-white/8">
+          <div className="control-segmented flex items-center gap-1">
             {(['all', 'url', 'file'] as FilterType[]).map((v) => (
               <button
                 key={v}
+                type="button"
                 onClick={() => { setFilterType(v); setPage(1); }}
+                aria-pressed={filterType === v}
                 className={[
                   'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
                   filterType === v
@@ -104,11 +107,13 @@ export function DashboardPage() {
           </div>
 
           {/* Sort filter */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/[0.04] dark:bg-white/[0.04] border border-slate-900/8 dark:border-white/8">
+          <div className="control-segmented flex items-center gap-1">
             {(['newest', 'oldest', 'most_scanned'] as SortOption[]).map((v) => (
               <button
                 key={v}
+                type="button"
                 onClick={() => { setSort(v); setPage(1); }}
+                aria-pressed={sort === v}
                 className={[
                   'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
                   sort === v

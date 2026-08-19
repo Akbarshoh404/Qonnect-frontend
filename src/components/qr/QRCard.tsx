@@ -84,12 +84,13 @@ export function QRCard({ qr }: QRCardProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+          <div className="flex-shrink-0 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate(`/qr/${qr.id}/analytics`)}
               title={t('qrCard.viewAnalytics')}
+              aria-label={t('qrCard.viewAnalytics')}
             >
               <BarChart2 size={15} />
             </Button>
@@ -98,6 +99,7 @@ export function QRCard({ qr }: QRCardProps) {
               size="sm"
               onClick={() => navigate(`/qr/${qr.id}/edit`)}
               title={t('common.edit')}
+              aria-label={t('common.edit')}
             >
               <Edit2 size={15} />
             </Button>
@@ -107,7 +109,9 @@ export function QRCard({ qr }: QRCardProps) {
                 size="sm"
                 onClick={() => setShowMenu(!showMenu)}
                 title={t('qrCard.moreOptions')}
-              >
+                aria-label={t('qrCard.moreOptions')}
+                aria-haspopup="menu"
+                aria-expanded={showMenu}>
                 <MoreHorizontal size={15} />
               </Button>
               <AnimatePresence>

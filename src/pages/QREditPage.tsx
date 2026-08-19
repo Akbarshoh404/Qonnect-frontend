@@ -15,7 +15,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { useQRCode, useUpdateQR, useReplaceFile } from '../hooks/useQRCodes';
 import { useDomains } from '../hooks/useDomains';
 import { qrService } from '../services/qr';
-import { formatFileSize, getFileIcon, formatDate } from '../utils/helpers';
+import { formatFileSize, getFileIcon, formatDate, isValidHttpUrl } from '../utils/helpers';
 
 export function QREditPage() {
   const { t, i18n } = useTranslation();
@@ -52,7 +52,7 @@ export function QREditPage() {
   const handleSave = async () => {
     const newErrors: Record<string, string> = {};
     if (!title.trim()) newErrors.title = t('qrEdit.titleRequired');
-    if (qr?.type === 'url' && destinationUrl && !destinationUrl.startsWith('http')) {
+    if (qr?.type === 'url' && destinationUrl && !isValidHttpUrl(destinationUrl)) {
       newErrors.url = t('qrEdit.urlInvalid');
     }
     setErrors(newErrors);

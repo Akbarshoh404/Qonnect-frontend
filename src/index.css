@@ -6,6 +6,9 @@
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
   --animate-fade-in: fade-in 0.5s ease-out both;
   --animate-scale-in: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-shimmer: shimmer 2.5s linear infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-float: float 6s ease-in-out infinite;
 
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(8px); }
@@ -15,32 +18,69 @@
     from { opacity: 0; transform: scale(0.96); }
     to { opacity: 1; transform: scale(1); }
   }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
 }
 
 @layer base {
   :root {
     --color-primary: 99 102 241;
     --color-primary-dark: 79 70 229;
+    --color-surface: 255 255 255;
+    --color-surface-muted: 248 250 252;
+    --color-surface-raised: 255 255 255;
+    --color-border: 226 232 240;
+    --color-border-strong: 203 213 225;
+    --color-text-muted: 100 116 139;
     --radius: 0.75rem;
+  }
+
+  .dark {
+    --color-surface: 2 6 23;
+    --color-surface-muted: 15 23 42;
+    --color-surface-raised: 15 23 42;
+    --color-border: 51 65 85;
+    --color-border-strong: 71 85 105;
+    --color-text-muted: 148 163 184;
   }
 
   html {
     scroll-behavior: smooth;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   body {
-    @apply bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+    @apply bg-[#fcfcfd] text-slate-900 dark:bg-[#06080e] dark:text-slate-100;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    font-feature-settings: 'cv11', 'ss01';
+    font-feature-settings: 'cv11', 'ss01', 'cv02';
   }
 
   ::selection {
-    @apply bg-indigo-500/30;
+    @apply bg-indigo-500/25 text-indigo-900 dark:text-indigo-200;
   }
 
   * {
-    scrollbar-color: rgb(148 163 184 / 0.4) transparent;
+    scrollbar-color: rgb(148 163 184 / 0.3) transparent;
   }
 }
 
@@ -49,7 +89,18 @@
     text-wrap: balance;
   }
 
-  /* Shared "glass card" surface used across the app; adapts to light/dark automatically. */
+  .glass-panel {
+    @apply bg-white/70 dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200/60 dark:border-white/[0.08] shadow-sm shadow-slate-900/[0.03] dark:shadow-none;
+  }
+
+  .glass-panel-hover {
+    @apply hover:bg-white/90 dark:hover:bg-slate-900/80 hover:border-slate-300/80 dark:hover:border-white/[0.15] transition-all duration-300;
+  }
+
+  .glass-pill {
+    @apply bg-white/80 dark:bg-white/[0.06] backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.1];
+  }
+
   .surface {
     @apply bg-slate-50/80 border border-slate-200/80 dark:bg-white/[0.03] dark:border-white/[0.08];
   }
@@ -59,6 +110,30 @@
   }
 
   .surface-raised {
-    @apply bg-white border border-slate-200 shadow-sm shadow-slate-900/5 dark:bg-white/[0.05] dark:border-white/[0.1] dark:shadow-none;
+    @apply bg-white border border-slate-200/90 shadow-sm shadow-slate-900/5 dark:bg-white/[0.04] dark:border-white/[0.08] dark:shadow-none;
+  }
+
+  .surface-subtle {
+    @apply bg-slate-50/60 border border-slate-200/70 dark:bg-white/[0.02] dark:border-white/[0.06];
+  }
+
+  .surface-interactive {
+    @apply bg-white/80 border border-slate-200/80 shadow-sm shadow-slate-900/5 hover:border-slate-300 hover:shadow-md hover:shadow-slate-900/8 dark:bg-white/[0.04] dark:border-white/[0.08] dark:hover:border-white/[0.14] dark:hover:shadow-none;
+  }
+
+  .control-segmented {
+    @apply bg-slate-900/[0.03] dark:bg-white/5 border border-slate-900/10 dark:border-white/10 p-1 rounded-xl;
+  }
+
+  .page-shell {
+    @apply mx-auto px-4 sm:px-6 py-8;
+  }
+
+  .gradient-glow-indigo {
+    background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.15), transparent 70%);
+  }
+
+  .gradient-glow-violet {
+    background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.12), transparent 70%);
   }
 }

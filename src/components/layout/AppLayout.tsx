@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  LayoutDashboard, Plus, Settings, LogOut, Sun, Moon, Monitor,
+  LayoutDashboard, Plus, LogOut, Sun, Moon, Monitor,
   ChevronDown, QrCode, Globe, HardDrive, Menu, X
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -12,16 +12,17 @@ import { authService } from '../../services/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '../../utils/helpers';
 import { LanguageSwitcher } from '../ui/LanguageSwitcher';
+import { pageEnterMotion, popoverMotion, premiumEase, usePremiumMotion, quickTransition } from '../../utils/motion';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const location = useLocation();
-  const navigate = useNavigate();
   const qc = useQueryClient();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { reduceMotion } = usePremiumMotion();
 
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
@@ -32,6 +33,25 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { to: '/settings/domains', icon: Globe, label: t('nav.domains') },
     { to: '/settings/google-drive', icon: HardDrive, label: t('nav.googleDrive') },
   ];
+
+  useEffect(() => {
+    setMobileOpen(false);
+    setUserMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    };
+    document.addEventListener('keydown', handleKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = previous;
+    };
+  }, [mobileOpen]);
 
   const handleLogout = async () => {
     try {
@@ -82,9 +102,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex">
-      {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex flex-col w-64 border-r border-slate-200/80 dark:border-white/[0.06] p-4 gap-1 fixed inset-y-0">
-        {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 px-3 py-3 mb-3 group">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-600/25 group-hover:scale-105 transition-transform">
             <QrCode size={16} className="text-white" />
@@ -92,7 +110,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <span className="text-lg font-bold tracking-tight">{t('common.appName')}</span>
         </Link>
 
-        {/* Nav */}
         <nav className="flex flex-col gap-0.5 flex-1">
           {navItems.map(({ to, icon, label }) => renderLink(to, icon, label))}
 
@@ -103,11 +120,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           {settingsItems.map(({ to, icon, label }) => renderLink(to, icon, label))}
         </nav>
 
-        {/* User area */}
         <div className="relative border-t border-slate-200/80 dark:border-white/[0.06] pt-3">
           <button
             id="user-menu-trigger"
+            type="button"
             onClick={() => setUserMenuOpen(!userMenuOpen)}
+            aria-expanded={userMenuOpen}
+            aria-controls="user-menu-panel"
             className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-slate-900/5 dark:hover:bg-white/5 transition-all text-left cursor-pointer"
           >
             {user?.avatar_url ? (
@@ -127,10 +146,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <AnimatePresence>
             {userMenuOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                id="user-menu-panel"
+                initial={popoverMotion.initial}
+                animate={popoverMotion.animate}
+                exit={popoverMotion.exit}
+                transition={quickTransition}
                 className="absolute bottom-full left-0 right-0 mb-2 surface-raised rounded-2xl shadow-xl overflow-hidden backdrop-blur-xl"
               >
                 <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200/80 dark:border-white/[0.06]">
@@ -138,6 +158,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <LanguageSwitcher variant="minimal" />
                 </div>
                 <button
+                  type="button"
                   onClick={cycleTheme}
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-900/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 >
@@ -145,6 +166,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   {t('theme.toggle')}: {t(`theme.${theme}`)}
                 </button>
                 <button
+                  type="button"
                   onClick={handleLogout}
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-500 dark:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
                 >
@@ -157,7 +179,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Mobile header */}
       <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 py-3 border-b border-slate-200/80 dark:border-white/[0.06] bg-white/90 dark:bg-slate-950/90 backdrop-blur-md">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
@@ -167,58 +188,81 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </Link>
         <div className="flex items-center gap-1">
           <LanguageSwitcher variant="minimal" />
-          <button onClick={cycleTheme} className="p-2 rounded-lg hover:bg-slate-900/5 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 cursor-pointer">
+          <button type="button" onClick={cycleTheme} className="p-2 rounded-lg hover:bg-slate-900/5 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 cursor-pointer" aria-label={t('theme.toggle')}>
             <ThemeIcon size={18} />
           </button>
-          <button onClick={() => setMobileOpen(!mobileOpen)} aria-label={t('nav.menu')} className="p-2 rounded-lg hover:bg-slate-900/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 cursor-pointer">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={t('nav.menu')}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav-panel"
+            className="p-2 rounded-lg hover:bg-slate-900/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 cursor-pointer"
+          >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile nav */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-30 bg-white dark:bg-slate-950 pt-16 p-4"
-          >
-            <nav className="flex flex-col gap-1">
-              {[...navItems, ...settingsItems].map(({ to, icon: Icon, label }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all',
-                    location.pathname === to
-                      ? 'bg-indigo-600/10 text-indigo-600 dark:bg-indigo-600/20 dark:text-indigo-300'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-900/5 dark:hover:bg-white/5'
-                  )}
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="lg:hidden fixed inset-0 z-30 bg-slate-950/30 backdrop-blur-sm"
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.div
+              id="mobile-nav-panel"
+              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: premiumEase }}
+              className="lg:hidden fixed inset-x-0 top-16 z-30 bg-white dark:bg-slate-950 p-4 border-b border-slate-200/80 dark:border-white/[0.06] shadow-xl"
+            >
+              <nav className="flex flex-col gap-1">
+                {[...navItems, ...settingsItems].map(({ to, icon: Icon, label }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      'flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all',
+                      location.pathname === to
+                        ? 'bg-indigo-600/10 text-indigo-600 dark:bg-indigo-600/20 dark:text-indigo-300'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-900/5 dark:hover:bg-white/5'
+                    )}
+                  >
+                    <Icon size={20} />
+                    {label}
+                  </Link>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => { handleLogout(); setMobileOpen(false); }}
+                  className="flex items-center gap-3 px-4 py-3 text-red-500 dark:text-red-400 text-base font-medium cursor-pointer"
                 >
-                  <Icon size={20} />
-                  {label}
-                </Link>
-              ))}
-              <button
-                onClick={() => { handleLogout(); setMobileOpen(false); }}
-                className="flex items-center gap-3 px-4 py-3 text-red-500 dark:text-red-400 text-base font-medium cursor-pointer"
-              >
-                <LogOut size={20} />
-                {t('nav.signOut')}
-              </button>
-            </nav>
-          </motion.div>
+                  <LogOut size={20} />
+                  {t('nav.signOut')}
+                </button>
+              </nav>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
-      {/* Main content */}
       <main className="flex-1 lg:ml-64 pt-16 lg:pt-0 min-h-screen">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <motion.div
+          key={location.pathname}
+          initial={reduceMotion ? { opacity: 0 } : pageEnterMotion.initial}
+          animate={reduceMotion ? { opacity: 1 } : pageEnterMotion.animate}
+          transition={quickTransition}
+          className="page-shell max-w-6xl"
+        >
           {children}
-        </div>
+        </motion.div>
       </main>
     </div>
   );

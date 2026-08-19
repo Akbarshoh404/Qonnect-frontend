@@ -20,6 +20,9 @@ export function Input({
   ...props
 }: InputProps) {
   const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+  const hintId = inputId ? `${inputId}-hint` : undefined;
+  const errorId = inputId ? `${inputId}-error` : undefined;
+  const describedBy = [hint && hintId, error && errorId].filter(Boolean).join(' ') || undefined;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -36,6 +39,8 @@ export function Input({
         )}
         <input
           id={inputId}
+          aria-describedby={describedBy}
+          aria-invalid={error ? true : undefined}
           className={cn(
             'w-full rounded-xl bg-slate-900/[0.03] dark:bg-white/5 border text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500',
             'focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all',
@@ -55,8 +60,8 @@ export function Input({
           </div>
         )}
       </div>
-      {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
-      {hint && !error && <p className="text-xs text-slate-400 dark:text-slate-500">{hint}</p>}
+      {error && <p id={errorId} className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+      {hint && !error && <p id={hintId} className="text-xs text-slate-400 dark:text-slate-500">{hint}</p>}
     </div>
   );
 }

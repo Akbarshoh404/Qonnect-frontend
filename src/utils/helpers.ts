@@ -38,6 +38,15 @@ export function copyToClipboard(text: string): Promise<void> {
   return navigator.clipboard.writeText(text);
 }
 
+export function isValidHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export function getFileIcon(mimeType: string | undefined): string {
   if (!mimeType) return '📄';
   if (mimeType.startsWith('image/')) return '🖼️';

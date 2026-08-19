@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
 import { useDriveStatus } from '../hooks/useDomains';
+import { authService } from '../services/auth';
 import { cn } from '../utils/helpers';
 
 export function DriveSettingsPage() {
@@ -16,7 +17,7 @@ export function DriveSettingsPage() {
   const [disconnecting, setDisconnecting] = useState(false);
 
   const handleConnect = () => {
-    window.location.href = '/api/auth/drive/connect';
+    window.location.href = authService.getDriveConnectUrl();
   };
 
   const handleDisconnect = async () => {

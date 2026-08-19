@@ -12,18 +12,14 @@ import { CopyField } from '../components/ui/CopyButton';
 import { useCreateUrlQR, useCreateFileQR } from '../hooks/useQRCodes';
 import { useDomains } from '../hooks/useDomains';
 import { useAuth } from '../hooks/useAuth';
+import { authService } from '../services/auth';
 import { qrService } from '../services/qr';
 import type { QrCode } from '../types';
+import { isValidHttpUrl } from '../utils/helpers';
+import { stepBackwardMotion, stepForwardMotion, premiumEase, usePremiumMotion } from '../utils/motion';
 
 type Step = 'choose' | 'form' | 'success';
 type QrType = 'url' | 'file';
-
-const stepTransition = {
-  initial: { opacity: 0, x: 16 },
-  animate: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -16 },
-  transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const },
-};
 
 export function CreateQRPage() {
   const { t } = useTranslation();
@@ -31,10 +27,11 @@ export function CreateQRPage() {
   const { driveConnected } = useAuth();
   const { data: domains } = useDomains();
   const [step, setStep] = useState<Step>('choose');
+  const [stepDirection, setStepDirection] = useState<'forward' | 'backward'>('forward');
   const [qrType, setQrType] = useState<QrType>('url');
   const [created, setCreated] = useState<QrCode | null>(null);
+  const { reduceMotion } = usePremiumMotion();
 
-  // Form state
   const [title, setTitle] = useState('');
   const [destinationUrl, setDestinationUrl] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -52,7 +49,7 @@ export function CreateQRPage() {
     if (!title.trim()) newErrors.title = t('createQr.titleRequired');
     if (qrType === 'url') {
       if (!destinationUrl.trim()) newErrors.url = t('createQr.urlRequired');
-      else if (!destinationUrl.startsWith('http')) newErrors.url = t('createQr.urlInvalid');
+      else if (!isValidHttpUrl(destinationUrl.trim())) newErrors.url = t('createQr.urlInvalid');
     }
     if (qrType === 'file' && !selectedFile) newErrors.file = t('createQr.fileRequired');
     setErrors(newErrors);
@@ -78,6 +75,7 @@ export function CreateQRPage() {
         });
       }
       setCreated(result);
+      setStepDirection('forward');
       setStep('success');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || t('createQr.genericError');
@@ -87,6 +85,7 @@ export function CreateQRPage() {
 
   const handleChooseType = (type: QrType) => {
     setQrType(type);
+    setStepDirection('forward');
     setStep('form');
     setTitle('');
     setDestinationUrl('');
@@ -94,13 +93,24 @@ export function CreateQRPage() {
     setErrors({});
   };
 
+  const goBackToChoose = () => {
+    setStepDirection('backward');
+    setStep('choose');
+  };
+
+  const stepVariants = reduceMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : stepDirection === 'forward'
+      ? stepForwardMotion
+      : stepBackwardMotion;
+
   return (
     <AppLayout>
       <AnimatePresence mode="wait">
         {step === 'choose' && (
-          <motion.div key="choose" {...stepTransition} className="max-w-lg mx-auto">
+          <motion.div key="choose" initial={stepVariants.initial} animate={stepVariants.animate} exit={stepVariants.exit} transition={{ duration: 0.24, ease: premiumEase }} className="max-w-lg mx-auto">
             <div className="mb-8">
-              <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 transition-colors cursor-pointer">
+              <button type="button" onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 transition-colors cursor-pointer">
                 <ArrowLeft size={16} /> {t('createQr.back')}
               </button>
               <h1 className="text-2xl font-bold">{t('createQr.title')}</h1>
@@ -109,53 +119,52 @@ export function CreateQRPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button
+                type="button"
                 id="choose-url-type"
                 onClick={() => handleChooseType('url')}
-                className="group p-6 rounded-2xl surface text-left
-                  hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all duration-200 cursor-pointer"
+                className="group p-6 rounded-2xl surface text-left hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all duration-200 cursor-pointer"
               >
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/15 flex items-center justify-center mb-4
-                  group-hover:bg-indigo-500/25 transition-colors">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/15 flex items-center justify-center mb-4 group-hover:bg-indigo-500/25 transition-colors">
                   <Link2 size={22} className="text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1">{t('createQr.urlType')}</h3>
                 <p className="text-sm text-slate-400 dark:text-slate-500">{t('createQr.urlTypeDesc')}</p>
               </button>
 
-              <button
-                id="choose-file-type"
-                onClick={() => handleChooseType('file')}
-                disabled={!driveConnected}
-                className="group p-6 rounded-2xl surface text-left
-                  hover:bg-purple-500/10 hover:border-purple-500/30 transition-all duration-200
-                  disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-purple-500/10 dark:bg-purple-500/15 flex items-center justify-center mb-4
-                  group-hover:bg-purple-500/25 transition-colors">
-                  <File size={22} className="text-purple-600 dark:text-purple-400" />
-                </div>
-                <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1">{t('createQr.fileType')}</h3>
-                <p className="text-sm text-slate-400 dark:text-slate-500">
-                  {driveConnected ? t('createQr.fileTypeDescConnected') : t('createQr.fileTypeDescDisconnected')}
-                </p>
+              <div className="group p-6 rounded-2xl surface text-left hover:bg-purple-500/10 hover:border-purple-500/30 transition-all duration-200">
+                <button
+                  type="button"
+                  id="choose-file-type"
+                  onClick={() => driveConnected && handleChooseType('file')}
+                  disabled={!driveConnected}
+                  className="w-full text-left cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-purple-500/10 dark:bg-purple-500/15 flex items-center justify-center mb-4 group-hover:bg-purple-500/25 transition-colors">
+                    <File size={22} className="text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1">{t('createQr.fileType')}</h3>
+                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                    {driveConnected ? t('createQr.fileTypeDescConnected') : t('createQr.fileTypeDescDisconnected')}
+                  </p>
+                </button>
                 {!driveConnected && (
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); window.location.href = '/api/auth/drive/connect'; }}
-                    className="mt-3 text-xs text-indigo-600 dark:text-indigo-400 underline cursor-pointer"
+                    onClick={() => { window.location.href = authService.getDriveConnectUrl(); }}
+                    className="mt-4 inline-flex items-center text-xs text-indigo-600 dark:text-indigo-400 underline cursor-pointer"
                   >
                     {t('createQr.connectDriveLink')}
                   </button>
                 )}
-              </button>
+              </div>
             </div>
           </motion.div>
         )}
 
         {step === 'form' && (
-          <motion.div key="form" {...stepTransition} className="max-w-lg mx-auto">
+          <motion.div key="form" initial={stepVariants.initial} animate={stepVariants.animate} exit={stepVariants.exit} transition={{ duration: 0.24, ease: premiumEase }} className="max-w-lg mx-auto">
             <div className="mb-8">
-              <button onClick={() => setStep('choose')} className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 transition-colors cursor-pointer">
+              <button type="button" onClick={goBackToChoose} className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-4 transition-colors cursor-pointer">
                 <ArrowLeft size={16} /> {t('createQr.back')}
               </button>
               <div className="flex items-center gap-3">
@@ -197,7 +206,7 @@ export function CreateQRPage() {
               ) : (
                 <FileDropzone
                   label={t('createQr.fileLabel')}
-                  onFileSelect={(file) => setSelectedFile(file)}
+                  onFileSelect={setSelectedFile}
                   currentFile={selectedFile}
                   hint={t('createQr.fileHint')}
                   error={errors.file}
@@ -211,8 +220,7 @@ export function CreateQRPage() {
                     id="qr-domain"
                     value={selectedDomain ?? ''}
                     onChange={(e) => setSelectedDomain(e.target.value ? Number(e.target.value) : null)}
-                    className="h-10 px-3 rounded-xl bg-slate-900/[0.03] dark:bg-white/5 border border-slate-900/10 dark:border-white/10 text-sm text-slate-700 dark:text-slate-300
-                      focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    className="h-10 px-3 rounded-xl bg-slate-900/[0.03] dark:bg-white/5 border border-slate-900/10 dark:border-white/10 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                   >
                     <option value="">{t('createQr.domainDefault')}</option>
                     {verifiedDomains.map((d) => (
@@ -223,7 +231,7 @@ export function CreateQRPage() {
               )}
 
               {errors.submit && (
-                <p className="text-sm text-red-500 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                <p role="alert" className="text-sm text-red-500 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
                   {errors.submit}
                 </p>
               )}
@@ -231,7 +239,7 @@ export function CreateQRPage() {
               <div className="flex gap-3 pt-2">
                 <Button
                   variant="secondary"
-                  onClick={() => setStep('choose')}
+                  onClick={() => { setStepDirection('backward'); setStep('choose'); }}
                   className="flex-1"
                 >
                   {t('createQr.cancel')}
@@ -250,7 +258,7 @@ export function CreateQRPage() {
         )}
 
         {step === 'success' && created && (
-          <motion.div key="success" {...stepTransition} className="max-w-md mx-auto text-center">
+          <motion.div key="success" initial={stepVariants.initial} animate={stepVariants.animate} exit={stepVariants.exit} transition={{ duration: 0.24, ease: premiumEase }} className="max-w-md mx-auto text-center">
             <motion.div
               initial={{ scale: 0.6, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -307,8 +315,9 @@ export function CreateQRPage() {
             </div>
 
             <button
+              type="button"
               className="mt-4 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors cursor-pointer"
-              onClick={() => { setStep('choose'); setCreated(null); }}
+              onClick={() => { setStepDirection('backward'); setStep('choose'); setCreated(null); }}
             >
               {t('createQr.createAnother')}
             </button>
