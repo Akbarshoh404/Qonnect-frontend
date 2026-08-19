@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Link2, File, ArrowLeft, Check, Download, ExternalLink,
-  Sparkles, Palette, Folder, Settings, ShieldAlert
+  Link2, File, ArrowLeft, Check, Download,
+  Palette, ShieldAlert, Sparkles, Folder
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Button } from '../components/ui/Button';
@@ -12,6 +12,7 @@ import { Input } from '../components/ui/Input';
 import { FileDropzone } from '../components/ui/FileDropzone';
 import { QRDisplay } from '../components/qr/QRDisplay';
 import { QRDesignStudio } from '../components/qr/QRDesignStudio';
+import { Branded404Studio } from '../components/qr/Branded404Studio';
 import { CopyField } from '../components/ui/CopyButton';
 import { useCreateUrlQR, useCreateFileQR, useProjectsAndTags } from '../hooks/useQRCodes';
 import { useDomains } from '../hooks/useDomains';
@@ -158,9 +159,9 @@ export function CreateQRPage() {
             animate={stepVariants.animate}
             exit={stepVariants.exit}
             transition={{ duration: 0.24, ease: premiumEase }}
-            className="max-w-lg mx-auto"
+            className="max-w-lg mx-auto py-2"
           >
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
@@ -168,8 +169,8 @@ export function CreateQRPage() {
               >
                 <ArrowLeft size={16} /> {t('createQr.back')}
               </button>
-              <h1 className="text-2xl font-bold">{t('createQr.title')}</h1>
-              <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('createQr.title')}</h1>
+              <p className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 mt-1">
                 {t('createQr.subtitle')}
               </p>
             </div>
@@ -179,20 +180,20 @@ export function CreateQRPage() {
                 type="button"
                 id="choose-url-type"
                 onClick={() => handleChooseType('url')}
-                className="group p-6 rounded-2xl surface text-left hover:bg-indigo-500/10 hover:border-indigo-500/30 transition-all duration-200 cursor-pointer"
+                className="group p-5 sm:p-6 rounded-3xl surface text-left hover:border-indigo-500/30 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
               >
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/15 flex items-center justify-center mb-4 group-hover:bg-indigo-500/25 transition-colors">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/15 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                   <Link2 size={22} className="text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1">
                   {t('createQr.urlType')}
                 </h3>
-                <p className="text-sm text-slate-400 dark:text-slate-500">
+                <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
                   {t('createQr.urlTypeDesc')}
                 </p>
               </button>
 
-              <div className="group p-6 rounded-2xl surface text-left hover:bg-purple-500/10 hover:border-purple-500/30 transition-all duration-200">
+              <div className="group p-5 sm:p-6 rounded-3xl surface text-left hover:border-purple-500/30 transition-all duration-200 shadow-sm hover:shadow-md">
                 <button
                   type="button"
                   id="choose-file-type"
@@ -200,13 +201,13 @@ export function CreateQRPage() {
                   disabled={!driveConnected}
                   className="w-full text-left cursor-pointer disabled:cursor-not-allowed"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-purple-500/10 dark:bg-purple-500/15 flex items-center justify-center mb-4 group-hover:bg-purple-500/25 transition-colors">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-500/10 dark:bg-purple-500/15 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                     <File size={22} className="text-purple-600 dark:text-purple-400" />
                   </div>
                   <h3 className="font-semibold text-slate-900 dark:text-slate-200 mb-1">
                     {t('createQr.fileType')}
                   </h3>
-                  <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
                     {driveConnected
                       ? t('createQr.fileTypeDescConnected')
                       : t('createQr.fileTypeDescDisconnected')}
@@ -218,7 +219,7 @@ export function CreateQRPage() {
                     onClick={() => {
                       window.location.href = authService.getDriveConnectUrl();
                     }}
-                    className="mt-4 inline-flex items-center text-xs text-indigo-600 dark:text-indigo-400 underline cursor-pointer"
+                    className="mt-3 inline-flex items-center text-xs text-indigo-600 dark:text-indigo-400 underline cursor-pointer"
                   >
                     {t('createQr.connectDriveLink')}
                   </button>
@@ -235,24 +236,25 @@ export function CreateQRPage() {
             animate={stepVariants.animate}
             exit={stepVariants.exit}
             transition={{ duration: 0.24, ease: premiumEase }}
-            className="max-w-4xl mx-auto"
+            className="max-w-4xl mx-auto space-y-6"
           >
-            <div className="mb-6 flex items-center justify-between">
+            {/* Header with Navigation Pills */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <button
                   type="button"
                   onClick={goBackToChoose}
-                  className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-2 transition-colors cursor-pointer"
+                  className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-1.5 transition-colors cursor-pointer"
                 >
-                  <ArrowLeft size={16} /> {t('createQr.back')}
+                  <ArrowLeft size={15} /> {t('createQr.back')}
                 </button>
-                <h1 className="text-2xl font-bold tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
                   {qrType === 'url' ? t('createQr.formTitleUrl') : t('createQr.formTitleFile')}
                 </h1>
               </div>
 
-              {/* Navigation Tabs (Content vs Design vs Inactive Branding) */}
-              <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900/[0.04] dark:bg-white/[0.04]">
+              {/* Navigation Tabs (Destination vs QR Design vs 404 Inactive) */}
+              <div className="flex items-center gap-1 p-1 rounded-2xl bg-slate-900/[0.04] dark:bg-white/[0.06] overflow-x-auto no-scrollbar">
                 {[
                   { id: 'content', label: '1. Destination', icon: Link2 },
                   { id: 'design', label: '2. QR Design Studio', icon: Palette },
@@ -266,7 +268,7 @@ export function CreateQRPage() {
                       type="button"
                       onClick={() => setActiveTab(t.id as typeof activeTab)}
                       className={cn(
-                        'flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-semibold transition-all cursor-pointer',
+                        'flex items-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer',
                         active
                           ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
                           : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
@@ -282,7 +284,7 @@ export function CreateQRPage() {
 
             {/* Tab 1: Content & Destination */}
             {activeTab === 'content' && (
-              <div className="surface rounded-3xl p-6 sm:p-8 space-y-6 max-w-xl mx-auto">
+              <div className="surface rounded-3xl p-5 sm:p-8 space-y-6 max-w-xl mx-auto">
                 <Input
                   id="qr-title"
                   label={t('createQr.titleLabel')}
@@ -320,13 +322,13 @@ export function CreateQRPage() {
                   </label>
                   <input
                     type="text"
-                    list="projects-list"
+                    list="create-projects-list"
                     placeholder="e.g. Dining Room, Marketing 2026"
                     value={projectName}
                     onChange={(e) => setProjectName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:border-indigo-500"
                   />
-                  <datalist id="projects-list">
+                  <datalist id="create-projects-list">
                     {projectsData?.projects?.map((p) => (
                       <option key={p.name} value={p.name} />
                     ))}
@@ -343,7 +345,7 @@ export function CreateQRPage() {
                     placeholder="menu, table-1, vip"
                     value={tagsInput}
                     onChange={(e) => setTagsInput(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
 
@@ -359,7 +361,7 @@ export function CreateQRPage() {
                       onChange={(e) =>
                         setSelectedDomain(e.target.value ? Number(e.target.value) : null)
                       }
-                      className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
                     >
                       <option value="">{t('createQr.defaultDomain')}</option>
                       {verifiedDomains.map((d) => (
@@ -375,11 +377,12 @@ export function CreateQRPage() {
                   <p className="text-xs text-rose-500 font-medium">{errors.submit}</p>
                 )}
 
-                <div className="flex items-center justify-between pt-4 border-t border-slate-200/60 dark:border-white/10">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200/60 dark:border-white/10">
                   <Button
                     variant="outline"
                     onClick={() => setActiveTab('design')}
-                    leftIcon={<Palette size={15} />}
+                    leftIcon={<Palette size={14} />}
+                    className="w-full sm:w-auto"
                   >
                     Customize Design →
                   </Button>
@@ -388,6 +391,7 @@ export function CreateQRPage() {
                     id="submit-qr-btn"
                     onClick={handleSubmit}
                     loading={isCreating}
+                    className="w-full sm:w-auto"
                   >
                     {t('createQr.submit')}
                   </Button>
@@ -404,73 +408,35 @@ export function CreateQRPage() {
                   onChange={setStyleConfig}
                 />
 
-                <div className="flex items-center justify-end gap-3 pt-4">
-                  <Button variant="outline" onClick={() => setActiveTab('content')}>
-                    ← Back to Content
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
+                  <Button variant="outline" onClick={() => setActiveTab('content')} className="w-full sm:w-auto">
+                    ← Back to Destination
                   </Button>
-                  <Button onClick={handleSubmit} loading={isCreating}>
-                    Create Dynamic QR Code
-                  </Button>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button variant="outline" onClick={() => setActiveTab('inactive')} className="w-full sm:w-auto">
+                      Branded 404 →
+                    </Button>
+                    <Button onClick={handleSubmit} loading={isCreating} className="w-full sm:w-auto">
+                      Create Dynamic QR Code
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Tab 3: Branded Inactive / 404 Page */}
+            {/* Tab 3: Branded Inactive & 404 Studio with Live Preview */}
             {activeTab === 'inactive' && (
-              <div className="surface rounded-3xl p-6 sm:p-8 space-y-6 max-w-xl mx-auto">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
-                    Branded Inactive & 404 Fallback
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Customize the page shown to scanners whenever you pause this QR code or if it expires.
-                  </p>
-                </div>
-
-                <Input
-                  label="Inactive Page Headline"
-                  placeholder="Link Temporarily Unavailable"
-                  value={inactiveConfig.title || ''}
-                  onChange={(e) =>
-                    setInactiveConfig({ ...inactiveConfig, title: e.target.value })
-                  }
+              <div className="space-y-6">
+                <Branded404Studio
+                  config={inactiveConfig}
+                  onChange={setInactiveConfig}
                 />
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Custom Message
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="We're currently updating this catalog. Please check back tomorrow!"
-                    value={inactiveConfig.message || ''}
-                    onChange={(e) =>
-                      setInactiveConfig({ ...inactiveConfig, message: e.target.value })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
-                  />
-                </div>
-
-                <Input
-                  label="Brand Logo URL (Optional)"
-                  placeholder="https://yourbrand.com/logo.png"
-                  value={inactiveConfig.logo_url || ''}
-                  onChange={(e) =>
-                    setInactiveConfig({ ...inactiveConfig, logo_url: e.target.value })
-                  }
-                />
-
-                <Input
-                  label="Support / Home Link URL (Optional)"
-                  placeholder="https://yourbrand.com/contact"
-                  value={inactiveConfig.support_url || ''}
-                  onChange={(e) =>
-                    setInactiveConfig({ ...inactiveConfig, support_url: e.target.value })
-                  }
-                />
-
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200/60 dark:border-white/10">
-                  <Button onClick={handleSubmit} loading={isCreating}>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4">
+                  <Button variant="outline" onClick={() => setActiveTab('design')} className="w-full sm:w-auto">
+                    ← Back to Design
+                  </Button>
+                  <Button onClick={handleSubmit} loading={isCreating} className="w-full sm:w-auto">
                     Create Dynamic QR Code
                   </Button>
                 </div>
@@ -486,14 +452,14 @@ export function CreateQRPage() {
             animate={stepVariants.animate}
             exit={stepVariants.exit}
             transition={{ duration: 0.24, ease: premiumEase }}
-            className="max-w-md mx-auto text-center"
+            className="max-w-md mx-auto text-center py-4"
           >
             <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-4">
               <Check size={28} className="text-emerald-600 dark:text-emerald-400" />
             </div>
 
             <h1 className="text-2xl font-bold mb-1">{t('createQr.successTitle')}</h1>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">
+            <p className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 mb-6">
               {t('createQr.successSubtitle')}
             </p>
 
@@ -501,13 +467,13 @@ export function CreateQRPage() {
             <div className="p-6 rounded-3xl surface mb-6">
               <QRDisplay
                 value={created.public_url}
-                size={200}
+                size={180}
                 className="mb-4"
                 fgColor={created.style_config?.fg_color}
                 bgColor={created.style_config?.bg_color}
               />
 
-              <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm mb-1">
+              <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm mb-1 truncate">
                 {created.title}
               </p>
               <CopyField value={created.public_url} />

@@ -48,6 +48,7 @@
     --color-border: 51 65 85;
     --color-border-strong: 71 85 105;
     --color-text-muted: 148 163 184;
+    color-scheme: dark;
   }
 
   html {
@@ -82,11 +83,29 @@
   * {
     scrollbar-color: rgb(148 163 184 / 0.3) transparent;
   }
+
+  select {
+    color-scheme: light dark;
+  }
+
+  .dark select,
+  .dark option {
+    background-color: #0c101a !important;
+    color: #f1f5f9 !important;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   .glass-panel {

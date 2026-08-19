@@ -3,14 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowLeft, Save, RefreshCw, Power, PowerOff, Download, Check,
-  AlertCircle, Palette, Link2, Folder, ShieldAlert, Sparkles
+  ArrowLeft, Save, Power, PowerOff, Download, Check,
+  Palette, Link2, ShieldAlert, RefreshCw
 } from 'lucide-react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { QRDisplay } from '../components/qr/QRDisplay';
 import { QRDesignStudio } from '../components/qr/QRDesignStudio';
+import { Branded404Studio } from '../components/qr/Branded404Studio';
 import { Badge } from '../components/ui/Badge';
 import { CopyField } from '../components/ui/CopyButton';
 import { FileDropzone } from '../components/ui/FileDropzone';
@@ -53,7 +54,6 @@ export function QREditPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Initialize form once QR loads
   useEffect(() => {
     if (qr && !formInit) {
       setTitle(qr.title);
@@ -161,7 +161,7 @@ export function QREditPage() {
             </button>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold">{qr.title}</h1>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{qr.title}</h1>
                 <Badge variant={qr.type === 'url' ? 'info' : 'purple'}>
                   {qr.type.toUpperCase()}
                 </Badge>
@@ -236,10 +236,10 @@ export function QREditPage() {
         </AnimatePresence>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900/[0.04] dark:bg-white/[0.04] max-w-md">
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-900/[0.04] dark:bg-white/[0.06] max-w-md overflow-x-auto no-scrollbar">
           {[
-            { id: 'details', label: 'Details & Destination', icon: Link2 },
-            { id: 'design', label: 'QR Design Studio', icon: Palette },
+            { id: 'details', label: 'Details', icon: Link2 },
+            { id: 'design', label: 'Design Studio', icon: Palette },
             { id: 'inactive', label: 'Branded 404', icon: ShieldAlert },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -250,7 +250,7 @@ export function QREditPage() {
                 type="button"
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer',
+                  'flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap',
                   active
                     ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-800 dark:text-slate-400'
@@ -364,7 +364,7 @@ export function QREditPage() {
                   placeholder="e.g. Downtown Branch"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
                 />
                 <datalist id="edit-projects-list">
                   {projectsData?.projects?.map((p) => (
@@ -383,7 +383,7 @@ export function QREditPage() {
                   placeholder="menu, table-1"
                   value={tagsInput}
                   onChange={(e) => setTagsInput(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
                 />
               </div>
 
@@ -399,7 +399,7 @@ export function QREditPage() {
                     onChange={(e) =>
                       setSelectedDomain(e.target.value ? Number(e.target.value) : null)
                     }
-                    className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
                   >
                     <option value="">{t('createQr.defaultDomain')}</option>
                     {verifiedDomains.map((d) => (
@@ -439,59 +439,15 @@ export function QREditPage() {
           </div>
         )}
 
-        {/* Tab 3: Branded Inactive & 404 Settings */}
+        {/* Tab 3: Branded Inactive & 404 Studio with Live Preview */}
         {activeTab === 'inactive' && (
-          <div className="surface rounded-3xl p-6 sm:p-8 space-y-6 max-w-xl mx-auto">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
-                Branded Inactive & 404 Fallback
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Customize the page shown to scanners whenever you pause this QR code or if it expires.
-              </p>
-            </div>
-
-            <Input
-              label="Inactive Page Headline"
-              placeholder="Link Temporarily Unavailable"
-              value={inactiveConfig.title || ''}
-              onChange={(e) => setInactiveConfig({ ...inactiveConfig, title: e.target.value })}
+          <div className="space-y-6">
+            <Branded404Studio
+              config={inactiveConfig}
+              onChange={setInactiveConfig}
             />
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                Custom Message
-              </label>
-              <textarea
-                rows={3}
-                placeholder="We're currently updating this catalog. Please check back tomorrow!"
-                value={inactiveConfig.message || ''}
-                onChange={(e) =>
-                  setInactiveConfig({ ...inactiveConfig, message: e.target.value })
-                }
-                className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-900/5 dark:bg-white/5 border border-slate-200 dark:border-white/10 focus:outline-none"
-              />
-            </div>
-
-            <Input
-              label="Brand Logo URL (Optional)"
-              placeholder="https://yourbrand.com/logo.png"
-              value={inactiveConfig.logo_url || ''}
-              onChange={(e) =>
-                setInactiveConfig({ ...inactiveConfig, logo_url: e.target.value })
-              }
-            />
-
-            <Input
-              label="Support / Home Link URL (Optional)"
-              placeholder="https://yourbrand.com/contact"
-              value={inactiveConfig.support_url || ''}
-              onChange={(e) =>
-                setInactiveConfig({ ...inactiveConfig, support_url: e.target.value })
-              }
-            />
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200/60 dark:border-white/10">
+            <div className="flex items-center justify-end gap-3 pt-4">
               <Button onClick={handleSave} loading={updateMutation.isPending} leftIcon={<Save size={14} />}>
                 Save Inactive Page Settings
               </Button>
